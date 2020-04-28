@@ -10,29 +10,30 @@
 (function ( $, window, document, undefined ) {
     var pluginName = "table2excel",
 
-    defaults = {
-        exclude: ".noExl",
-        name: "Table2Excel",
-        filename: "table2excel",
-        fileext: ".xls",
-        exclude_img: true,
-        exclude_links: true,
-        exclude_inputs: true,
-        preserveColors: false
-    };
+        defaults = {
+            exclude: ".noExl",
+            name: "Table2Excel",
+            filename: "table2excel",
+            fileext: ".xls",
+            exclude_img: true,
+            exclude_links: true,
+            exclude_inputs: true,
+            preserveColors: false,
+            useStylesOptions: true,
+        };
 
     // The actual plugin constructor
     function Plugin ( element, options ) {
-            this.element = element;
-            // jQuery has an extend method which merges the contents of two or
-            // more objects, storing the result in the first object. The first object
-            // is generally empty as we don't want to alter the default options for
-            // future instances of the plugin
-            //
-            this.settings = $.extend( {}, defaults, options );
-            this._defaults = defaults;
-            this._name = pluginName;
-            this.init();
+        this.element = element;
+        // jQuery has an extend method which merges the contents of two or
+        // more objects, storing the result in the first object. The first object
+        // is generally empty as we don't want to alter the default options for
+        // future instances of the plugin
+        //
+        this.settings = $.extend( {}, defaults, options );
+        this._defaults = defaults;
+        this._name = pluginName;
+        this.init();
     }
 
     Plugin.prototype = {
@@ -55,41 +56,53 @@
             };
 
             e.tableRows = [];
-	
-			// Styling variables
-			var additionalStyles = "";
-			var compStyle = null;
+
+            // Styling variables
+            var additionalStyles = "";
+            var compStyle = null;
 
             // get contents of table except for exclude
             $(e.element).each( function(i,o) {
                 var tempRows = "";
                 $(o).find("tr").not(e.settings.exclude).each(function (i,p) {
-					
-					// Reset for this row
-					additionalStyles = "";
-					
-					// Preserve background and text colors on the row
-					if(e.settings.preserveColors){
-						compStyle = getComputedStyle(p);
-						additionalStyles += (compStyle && compStyle.backgroundColor ? "background-color: " + compStyle.backgroundColor + ";" : "");
-						additionalStyles += (compStyle && compStyle.color ? "color: " + compStyle.color + ";" : "");
-					}
 
-					// Create HTML for Row
+                    // Reset for this row
+                    additionalStyles = "";
+
+                    // Preserve background and text colors on the row
+                    if(e.settings.preserveColors){
+                        compStyle = getComputedStyle(p);
+                        additionalStyles += (compStyle && compStyle.backgroundColor ? "background-color: " + compStyle.backgroundColor + ";" : "");
+                        additionalStyles += (compStyle && compStyle.color ? "color: " + compStyle.color + ";" : "");
+                    }
+
+                    if(e.settings.useStylesOptions){
+                        if(p.hasAttribute('bgcolor')){
+                            additionalStyles += "background-color: " + p.attr('bgcolor') + ";";
+                        }
+                    }
+
+                    // Create HTML for Row
                     tempRows += "<tr style='" + additionalStyles + "'>";
-                    
+
                     // Loop through each TH and TD
                     $(p).find("td,th").not(e.settings.exclude).each(function (i,q) { // p did not exist, I corrected
-						
-						// Reset for this column
-						additionalStyles = "";
-						
-						// Preserve background and text colors on the row
-						if(e.settings.preserveColors){
-							compStyle = getComputedStyle(q);
-							additionalStyles += (compStyle && compStyle.backgroundColor ? "background-color: " + compStyle.backgroundColor + ";" : "");
-							additionalStyles += (compStyle && compStyle.color ? "color: " + compStyle.color + ";" : "");
-						}
+
+                        // Reset for this column
+                        additionalStyles = "";
+
+                        // Preserve background and text colors on the row
+                        if(e.settings.preserveColors){
+                            compStyle = getComputedStyle(q);
+                            additionalStyles += (compStyle && compStyle.backgroundColor ? "background-color: " + compStyle.backgroundColor + ";" : "");
+                            additionalStyles += (compStyle && compStyle.color ? "color: " + compStyle.color + ";" : "");
+                        }
+
+                        if(e.settings.useStylesOptions){
+                            if(q.hasAttribute('bgcolor')){
+                                additionalStyles += "background-color: " + q.attr('bgcolor') + ";";
+                            }
+                        }
 
                         var rc = {
                             rows: $(this).attr("rowspan"),
@@ -108,8 +121,8 @@
                                 tempRows += " colspan='" + rc.cols + "' ";
                             }
                             if(additionalStyles){
-								tempRows += " style='" + additionalStyles + "'";
-							}
+                                tempRows += " style='" + additionalStyles + "'";
+                            }
                             tempRows += ">" + $(q).html() + "</td>";
                         }
                     });
@@ -157,16 +170,16 @@
             fullTemplate= e.template.head;
 
             if ( $.isArray(table) ) {
-                 Object.keys(table).forEach(function(i){
-                      //fullTemplate += e.template.sheet.head + "{worksheet" + i + "}" + e.template.sheet.tail;
-                      fullTemplate += e.template.sheet.head + sheetName + i + e.template.sheet.tail;
+                Object.keys(table).forEach(function(i){
+                    //fullTemplate += e.template.sheet.head + "{worksheet" + i + "}" + e.template.sheet.tail;
+                    fullTemplate += e.template.sheet.head + sheetName + i + e.template.sheet.tail;
                 });
             }
 
             fullTemplate += e.template.mid;
 
             if ( $.isArray(table) ) {
-                 Object.keys(table).forEach(function(i){
+                Object.keys(table).forEach(function(i){
                     fullTemplate += e.template.table.head + "{table" + i + "}" + e.template.table.tail;
                 });
             }
@@ -254,11 +267,11 @@
 
     $.fn[ pluginName ] = function ( options ) {
         var e = this;
-            e.each(function() {
-                if ( !$.data( e, "plugin_" + pluginName ) ) {
-                    $.data( e, "plugin_" + pluginName, new Plugin( this, options ) );
-                }
-            });
+        e.each(function() {
+            if ( !$.data( e, "plugin_" + pluginName ) ) {
+                $.data( e, "plugin_" + pluginName, new Plugin( this, options ) );
+            }
+        });
 
         // chain jQuery functions
         return e;
